@@ -1,0 +1,103 @@
+# Example ESPHome configuration for Soleus WS3-08E-201 AC
+# This file shows how to use the Soleus climate component
+
+esphome:
+  name: soleus-ac
+  platform: ESP32
+  board: esp32dev
+
+# Include the custom component
+external_components:
+  - source: 
+      type: local
+      path: ../  # Adjust path to point to the directory containing the soleus folder
+    components: [ soleus ]
+
+# WiFi configuration
+wifi:
+  ssid: "YourWiFiSSID"
+  password: "YourWiFiPassword"
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable OTA updates
+ota:
+
+# IR Transmitter - adjust pin as needed
+remote_transmitter:
+  pin: GPIO32
+  carrier_duty_percent: 50%
+
+# IR Receiver - adjust pin as needed  
+remote_receiver:
+  pin: GPIO33
+  dump: all  # Useful for debugging
+  
+# Climate component
+climate:
+  - platform: soleus
+    name: "Soleus AC"
+    id: soleus_ac
+    # Optional: specify IR transmitter/receiver if you have multiple
+    # transmitter_id: my_transmitter
+    # receiver_id: my_receiver
+    
+    # Supported modes will be automatically configured:
+    # - OFF
+    # - COOL
+    # - FAN_ONLY  
+    # - AUTO
+    # - DRY (dehumidification - LOW fan only)
+    
+    # Supported fan modes:
+    # - LOW
+    # - MEDIUM
+    # - HIGH
+    
+    # Supported presets:
+    # - NONE
+    # - ECO
+    # - SLEEP
+    
+    # Temperature range: 62-86°F (17-30°C)
+
+# Optional: Add some buttons for testing
+button:
+  - platform: template
+    name: "Set to 72°F Low"
+    on_press:
+      - climate.control:
+          id: soleus_ac
+          mode: COOL
+          target_temperature: 22°C  # 72°F
+          fan_mode: LOW
+          
+  - platform: template
+    name: "Set to ECO Mode 75°F"
+    on_press:
+      - climate.control:
+          id: soleus_ac
+          mode: COOL
+          target_temperature: 24°C  # 75°F
+          preset: ECO
+          
+  - platform: template
+    name: "Set to SLEEP Mode 68°F"
+    on_press:
+      - climate.control:
+          id: soleus_ac
+          mode: COOL
+          target_temperature: 20°C  # 68°F
+          preset: SLEEP
+          
+  - platform: template
+    name: "Set to DRY Mode"
+    on_press:
+      - climate.control:
+          id: soleus_ac
+          mode: DRY
+          # Fan mode will automatically be set to LOW
