@@ -14,6 +14,8 @@ Control your Soleus WS3-08E-201 Saddle Window Air Conditioner (and compatible mo
 
 ## Supported Models
 
+<img width="360" height="480" alt="image" src="https://github.com/user-attachments/assets/0aa390c6-4476-4556-9766-6e26ba386042" />
+
 This component supports the Soleus WS3-08E-201 and potentially other models from the same OEM manufacturer (Nantong Ningpu Electrical Appliance Co., Ltd.), including various rebranded units. See the [protocol documentation](AC_IR_Protocol_Documentation.md) for a comprehensive list of potentially compatible models and brands.
 
 ## Installation
