@@ -22,26 +22,10 @@ const uint32_t SOLEUS_BIT_MARK = 600;
 const uint32_t SOLEUS_ONE_SPACE = 1600;
 const uint32_t SOLEUS_ZERO_SPACE = 550;
 
-// Supported features
-const std::set<climate::ClimateMode> SOLEUS_MODES = {
-    climate::CLIMATE_MODE_OFF,
-    climate::CLIMATE_MODE_COOL,
-    climate::CLIMATE_MODE_FAN_ONLY,
-    climate::CLIMATE_MODE_AUTO,
-    climate::CLIMATE_MODE_DRY,
-};
-
-const std::set<climate::ClimateFanMode> SOLEUS_FAN_MODES = {
-    climate::CLIMATE_FAN_LOW,
-    climate::CLIMATE_FAN_MEDIUM,
-    climate::CLIMATE_FAN_HIGH,
-};
-
-const std::set<climate::ClimatePreset> SOLEUS_PRESETS = {
-    climate::CLIMATE_PRESET_NONE,
-    climate::CLIMATE_PRESET_ECO,
-    climate::CLIMATE_PRESET_SLEEP,
-};
+// Supported features (defined as inline comments for reference)
+// Modes: OFF, COOL, FAN_ONLY, AUTO, DRY
+// Fan Modes: LOW, MEDIUM, HIGH
+// Presets: NONE, ECO, SLEEP
 
 // Protocol byte definitions
 const uint8_t SOLEUS_BYTE1_DEVICE = 0x19;  // Device ID
@@ -94,7 +78,9 @@ class SoleusClimate : public climate_ir::ClimateIR {
  public:
   SoleusClimate()
       : climate_ir::ClimateIR(SOLEUS_TEMP_MIN_C, SOLEUS_TEMP_MAX_C, 1.0f, true, true,
-                              SOLEUS_FAN_MODES, {}, SOLEUS_PRESETS) {}
+                              {climate::CLIMATE_FAN_LOW, climate::CLIMATE_FAN_MEDIUM, climate::CLIMATE_FAN_HIGH},
+                              {},
+                              {climate::CLIMATE_PRESET_NONE, climate::CLIMATE_PRESET_ECO, climate::CLIMATE_PRESET_SLEEP}) {}
 
  protected:
   /// Transmit via IR the state of this climate controller
