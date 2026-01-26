@@ -77,12 +77,17 @@ const uint8_t SOLEUS_TEMP_BASE = 0x3E;  // Base value for 62°F
 class SoleusClimate : public climate_ir::ClimateIR {
  public:
   SoleusClimate()
-      : climate_ir::ClimateIR(SOLEUS_TEMP_MIN_C, SOLEUS_TEMP_MAX_C, 1.0f, true, true,
+      : climate_ir::ClimateIR(SOLEUS_TEMP_MIN_C, SOLEUS_TEMP_MAX_C, 1.0f, true, false,
                               {climate::CLIMATE_FAN_LOW, climate::CLIMATE_FAN_MEDIUM, climate::CLIMATE_FAN_HIGH},
                               {},
                               {climate::CLIMATE_PRESET_NONE, climate::CLIMATE_PRESET_ECO, climate::CLIMATE_PRESET_SLEEP}) {}
 
+  void set_supports_heat(bool supports_heat) { this->supports_heat_ = supports_heat; }
+
  protected:
+  /// Override traits to conditionally add heat mode
+  climate::ClimateTraits traits() override;
+
   /// Transmit via IR the state of this climate controller
   void transmit_state() override;
   
@@ -93,6 +98,8 @@ class SoleusClimate : public climate_ir::ClimateIR {
   bool parse_state_frame_(const uint8_t frame[]);
   
  private:
+  bool supports_heat_{false};
+
   void transmit_pronto_(const std::vector<uint16_t> &data);
   
   // Convert temperature between Celsius and Fahrenheit protocol values
