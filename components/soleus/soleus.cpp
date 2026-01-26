@@ -6,6 +6,16 @@ namespace soleus {
 
 static const char *const TAG = "soleus.climate";
 
+climate::ClimateTraits SoleusClimate::traits() {
+  auto traits = climate_ir::ClimateIR::traits();
+  
+  if (this->supports_heat_) {
+    traits.add_supported_mode(climate::CLIMATE_MODE_HEAT);
+  }
+  
+  return traits;
+}
+
 void SoleusClimate::transmit_state() {
   uint8_t frame[9] = {0};
   
@@ -52,6 +62,12 @@ void SoleusClimate::transmit_state() {
       frame[4] = SOLEUS_BYTE5_DRY;
       // Force LOW fan mode for DRY
       this->fan_mode = climate::CLIMATE_FAN_LOW;
+    } else if (this->mode == climate::CLIMATE_MODE_HEAT) {
+      // HEAT mode - only available if supports_heat_ is true
+      frame[2] = fan_speed_base | 0x01;  // Temperature control mode
+      frame[4] = temp_to_protocol_(this->target_temperature);
+      // TODO: Add heat-specific protocol bytes if different from cool
+      // This may need adjustment based on IR captures from heating models
     } else if (is_sleep) {
       frame[2] = fan_speed_base | 0x06;  // SLEEP mode
       frame[4] = temp_to_protocol_(this->target_temperature);
@@ -59,7 +75,7 @@ void SoleusClimate::transmit_state() {
       frame[2] = fan_speed_base | 0x05;  // ECO mode
       frame[4] = temp_to_protocol_(this->target_temperature);
     } else {
-      // Normal temperature control mode
+      // Normal temperature control mode (COOL)
       frame[2] = fan_speed_base | 0x01;  // Temperature control mode
       frame[4] = temp_to_protocol_(this->target_temperature);
     }
@@ -183,8 +199,8 @@ bool SoleusClimate::parse_state_frame_(const uint8_t frame[]) {
       this->preset = climate::CLIMATE_PRESET_NONE;
       break;
       
-    case 0x1:  // Temperature control mode
-      this->mode = climate::CLIMATE_MODE_COOL;
+    case 0x1:  // Temperature control mode (COOL or HEAT depending on unit)
+      this->mode = climate::CLIMATE_MODE_COOL;  // Default to COOL
       this->preset = climate::CLIMATE_PRESET_NONE;
       this->target_temperature = protocol_to_temp_(frame[4]);
       break;
