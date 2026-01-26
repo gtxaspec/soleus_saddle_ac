@@ -7,11 +7,39 @@ namespace soleus {
 static const char *const TAG = "soleus.climate";
 
 climate::ClimateTraits SoleusClimate::traits() {
-  auto traits = climate_ir::ClimateIR::traits();
+  auto traits = climate::ClimateTraits();
   
+  traits.set_supports_current_temperature(false);
+  traits.set_visual_min_temperature(SOLEUS_TEMP_MIN_C);
+  traits.set_visual_max_temperature(SOLEUS_TEMP_MAX_C);
+  traits.set_visual_temperature_step(1.0f);
+  
+  // Base modes - always supported
+  traits.set_supported_modes({
+    climate::CLIMATE_MODE_OFF,
+    climate::CLIMATE_MODE_COOL,
+    climate::CLIMATE_MODE_FAN_ONLY,
+    climate::CLIMATE_MODE_DRY,
+    climate::CLIMATE_MODE_AUTO,
+  });
+  
+  // Only add heat modes if supports_heat is true
   if (this->supports_heat_) {
     traits.add_supported_mode(climate::CLIMATE_MODE_HEAT);
+    traits.add_supported_mode(climate::CLIMATE_MODE_HEAT_COOL);
   }
+  
+  traits.set_supported_fan_modes({
+    climate::CLIMATE_FAN_LOW,
+    climate::CLIMATE_FAN_MEDIUM,
+    climate::CLIMATE_FAN_HIGH,
+  });
+  
+  traits.set_supported_presets({
+    climate::CLIMATE_PRESET_NONE,
+    climate::CLIMATE_PRESET_ECO,
+    climate::CLIMATE_PRESET_SLEEP,
+  });
   
   return traits;
 }
@@ -48,6 +76,9 @@ void SoleusClimate::transmit_state() {
       case climate::CLIMATE_FAN_HIGH:
         fan_speed_base = 0x30;
         break;
+      default:
+        fan_speed_base = 0x20;
+        break;
     }
     
     // Determine mode nibble based on current mode and preset
@@ -67,7 +98,6 @@ void SoleusClimate::transmit_state() {
       frame[2] = fan_speed_base | 0x01;  // Temperature control mode
       frame[4] = temp_to_protocol_(this->target_temperature);
       // TODO: Add heat-specific protocol bytes if different from cool
-      // This may need adjustment based on IR captures from heating models
     } else if (is_sleep) {
       frame[2] = fan_speed_base | 0x06;  // SLEEP mode
       frame[4] = temp_to_protocol_(this->target_temperature);
@@ -172,7 +202,6 @@ bool SoleusClimate::parse_state_frame_(const uint8_t frame[]) {
     return true;
   }
   
-  
   // Parse fan speed (upper nibble of byte 3)
   uint8_t fan_speed = frame[2] & 0xF0;
   switch (fan_speed) {
@@ -208,7 +237,6 @@ bool SoleusClimate::parse_state_frame_(const uint8_t frame[]) {
     case 0x2:  // DRY mode
       this->mode = climate::CLIMATE_MODE_DRY;
       this->preset = climate::CLIMATE_PRESET_NONE;
-      // DRY mode always uses LOW fan
       this->fan_mode = climate::CLIMATE_FAN_LOW;
       break;
       
@@ -239,16 +267,12 @@ void SoleusClimate::transmit_pronto_(const std::vector<uint16_t> &data) {
   auto *transmit_data = transmit.get_data();
   
   transmit_data->set_carrier_frequency(38000);
-  
-  // Reserve space for all transitions
   transmit_data->reserve(data.size());
   
-  // Add all timing data
   for (size_t i = 0; i < data.size(); i += 2) {
     if (i + 1 < data.size()) {
       transmit_data->item(data[i], data[i + 1]);
     } else {
-      // Last mark without space
       transmit_data->mark(data[i]);
     }
   }
@@ -257,21 +281,13 @@ void SoleusClimate::transmit_pronto_(const std::vector<uint16_t> &data) {
 }
 
 uint8_t SoleusClimate::temp_to_protocol_(float temp_c) const {
-  // Convert Celsius to Fahrenheit
   float temp_f = (temp_c * 9.0f / 5.0f) + 32.0f;
-  
-  // Clamp to valid range
   temp_f = std::max(static_cast<float>(SOLEUS_TEMP_MIN), std::min(static_cast<float>(SOLEUS_TEMP_MAX), temp_f));
-  
-  // Convert to protocol value
   return SOLEUS_TEMP_BASE + static_cast<uint8_t>(temp_f - SOLEUS_TEMP_MIN);
 }
 
 float SoleusClimate::protocol_to_temp_(uint8_t value) const {
-  // Convert protocol value to Fahrenheit
   float temp_f = static_cast<float>(value - SOLEUS_TEMP_BASE + SOLEUS_TEMP_MIN);
-  
-  // Convert to Celsius
   return (temp_f - 32.0f) * 5.0f / 9.0f;
 }
 
