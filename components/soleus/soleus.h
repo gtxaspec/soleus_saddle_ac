@@ -65,7 +65,7 @@ const uint8_t SOLEUS_TEMP_BASE = 0x3E;  // Base value for 62°F
 class SoleusClimate : public climate_ir::ClimateIR {
  public:
   SoleusClimate()
-      : climate_ir::ClimateIR(SOLEUS_TEMP_MIN_C, SOLEUS_TEMP_MAX_C, 1.0f, true, false,
+      : climate_ir::ClimateIR(SOLEUS_TEMP_MIN_C, SOLEUS_TEMP_MAX_C, 0.5f, true, false,
                               {climate::CLIMATE_FAN_LOW, climate::CLIMATE_FAN_MEDIUM, climate::CLIMATE_FAN_HIGH},
                               {},
                               {climate::CLIMATE_PRESET_NONE, climate::CLIMATE_PRESET_ECO, climate::CLIMATE_PRESET_SLEEP}) {}
