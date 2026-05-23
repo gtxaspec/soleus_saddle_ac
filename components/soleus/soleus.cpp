@@ -9,7 +9,6 @@ static const char *const TAG = "soleus.climate";
 climate::ClimateTraits SoleusClimate::traits() {
   auto traits = climate::ClimateTraits();
   
-  traits.set_supports_current_temperature(false);
   traits.set_visual_min_temperature(SOLEUS_TEMP_MIN_C);
   traits.set_visual_max_temperature(SOLEUS_TEMP_MAX_C);
   traits.set_visual_temperature_step(1.0f);
